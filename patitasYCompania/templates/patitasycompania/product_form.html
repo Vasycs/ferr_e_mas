@@ -1,0 +1,37 @@
+{% extends 'patitasYCompania/base.html' %}
+{% block title %}Formulario de Producto{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title text-center">Formulario de Producto</h2>
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <table class="table">
+                    {{ form.as_table }}
+                </table>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    {% if product.id %}
+                        <a href="{% url 'product_delete' product.id %}" class="btn btn-danger">Eliminar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

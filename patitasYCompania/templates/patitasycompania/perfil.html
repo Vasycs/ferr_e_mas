@@ -1,0 +1,39 @@
+{% extends 'patitasYCompania/base.html' %}
+
+{% block title %}Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-7"> 
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body my-5"> 
+                    <h2 class="card-title text-center mb-4">Completa tu Perfil</h2>
+                    <form method="post" action="{% url 'user_profile' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ usuario.first_name|default_if_none:'' }}" placeholder="Nombre">
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ usuario.profile.telefono|default_if_none:'' }}" placeholder="Teléfono">
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ usuario.profile.direccion|default_if_none:'' }}" placeholder="Dirección">
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
+                            <form method="post" action="{% url 'delete_user' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Eliminar Cuenta</button>
+                            </form>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

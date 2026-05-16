@@ -1,0 +1,12 @@
+{% extends 'patitasYCompania/base.html' %}
+{% block title %}Eliminar Producto{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>¿Está seguro que desea eliminar "{{ product.name }}"?</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a href="{% url 'product_detail' product.id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
