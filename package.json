@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "django": "^1.0.0",
+    "virtualenv": "^0.3.1"
+  }
+}
