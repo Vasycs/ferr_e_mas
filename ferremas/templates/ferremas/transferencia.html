@@ -1,0 +1,20 @@
+<div class="container">
+    <h1>¡Pedido Reservado!</h1>
+    <p>Para procesar tu envío, por favor transfiere el total a la siguiente cuenta:</p>
+    
+    <div class="datos-banco">
+        <ul>
+            <li><strong>Banco:</strong> Banco de Chile</li>
+            <li><strong>Tipo de Cuenta:</strong> Cuenta Corriente</li>
+            <li><strong>Número:</strong> 987654321</li>
+            <li><strong>RUT:</strong> 76.123.456-7</li>
+            <li><strong>Nombre:</strong> Ferremas SpA</li>
+            <li><strong>Correo:</strong> pagos@ferremas.cl</li>
+            <li><strong>Monto a transferir:</strong> ${{ total_con_descuento }}</li>
+        </ul>
+    </div>
+    
+    <div style="background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;">
+        <strong>Importante:</strong> Agrega tu número de pedido <b>{{ numero_pedido }}</b> en el asunto o comentario de la transferencia para identificar tu pago rápidamente.
+    </div>
+</div>

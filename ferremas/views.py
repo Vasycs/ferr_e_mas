@@ -242,6 +242,37 @@ def clear_cart(request):
     messages.success(request, 'El carrito ha sido vaciado.')
     return redirect('cart')
 
+def procesar_checkout(request):
+    if request.method == 'POST':
+        metodo = request.POST.get('metodo_pago')
+        
+        # Lógica general: Aquí deberías crear la Orden en la Base de Datos.
+        # orden = Orden.objects.create(...)
+        
+        if metodo == 'WEBPAY':
+            # orden.metodo_pago = 'WEBPAY'
+            # orden.save()
+            return redirect('checkout') # Tu vista actual de transbank
+            
+        elif metodo == 'TRANSFERENCIA':
+            # orden.metodo_pago = 'TRANSFERENCIA'
+            # orden.estado = 'ESPERANDO_TRANSFERENCIA'
+            # orden.save()
+            
+            # Limpiar el carrito de la sesión aquí
+            
+            return redirect('instrucciones_transferencia') # Nueva vista
+            
+    return redirect('carrito')
+
+def instrucciones_transferencia(request):
+    # En un caso real, le pasas el ID de la orden recién creada para que la use como "Asunto"
+    contexto = {
+        "numero_pedido": "ORD-12345", 
+        "total_a_pagar": 15000
+    }
+    return render(request, 'ferremas/transferencia.html', contexto)
+
 @login_required
 def checkout(request):
     cart_items = CartItem.objects.filter(user=request.user)
@@ -263,7 +294,7 @@ def checkout(request):
     descuento = str(int(descuento))
 
     # 1. Preparar los datos (Aquí conectas con tu Carrito de compras)
-    monto_total = total_con_descuento # Reemplazar con la suma del carrito
+    
     orden_compra = str(uuid.uuid4())[:26] # Generar ID único para la orden
     id_sesion = request.session.session_key or "sesion_anonima"
     

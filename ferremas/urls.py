@@ -26,6 +26,8 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('checkout/webpay/crear/', views.checkout, name='webpay_create'),
     path('checkout/webpay/retorno/', views.webpay_commit, name='webpay_commit'),
+    path('checkout/procesar/', views.procesar_checkout, name='procesar_checkout'),
+    path('checkout/transferencia/', views.instrucciones_transferencia, name='instrucciones_transferencia'),
 ] 
 
 if settings.DEBUG:

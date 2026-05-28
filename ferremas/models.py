@@ -53,9 +53,14 @@ class Orden(models.Model):
     # Estados posibles de la orden
     ESTADO_CHOICES = [
         ('PENDIENTE', 'Pendiente de Pago'),
+        ('ESPERANDO_TRANSFERENCIA', 'Esperando Confirmación Bancaria'),
         ('PAGADA', 'Pagada Exitosamente'),
         ('RECHAZADA', 'Pago Rechazado'),
         ('CANCELADA', 'Cancelada por el Usuario / Timeout'),
+    ]
+    METODO_PAGO_CHOICES = [
+        ('WEBPAY', 'Transbank Webpay Plus'),
+        ('TRANSFERENCIA', 'Transferencia Bancaria'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -63,7 +68,8 @@ class Orden(models.Model):
     session_id = models.CharField(max_length=100, blank=True, null=True) # Para usuarios anónimos
     
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default='PENDIENTE')
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='WEBPAY')
     
     # Datos específicos para auditoría con Transbank
     total = models.PositiveIntegerField(help_text="Total pagado en CLP")
