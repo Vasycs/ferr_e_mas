@@ -1,4 +1,4 @@
-Patitas y Compañía
+Ferremas
 
 Este es un proyecto de e-commerce para la venta de accesorios para mascotas.
 
@@ -13,8 +13,8 @@ Instalación
 1. Clona el repositorio:
 
    
-   git clone https://github.com/tuusuario/patitas-y-compania.git
-   cd patitas-y-compania
+    git clone https://github.com/Vasycs/ferr_e_mas.git
+   cd ferremas
    
 
 2. Crea y activa un entorno virtual:

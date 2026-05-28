@@ -1,0 +1,53 @@
+{% extends 'ferremas/base.html' %}
+
+{% block title %}Pagar{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-6 bg-light p-4">
+      <h2>Detalles del Pago</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="card_number" class="form-label">Número de Tarjeta</label>
+          <input type="text" class="form-control" id="card_number" name="card_number" required />
+        </div>
+        <div class="mb-3">
+          <label for="expiry_date" class="form-label">Fecha de Expiración</label>
+          <input type="text" class="form-control" id="expiry_date" name="expiry_date" placeholder="MM/YY" required />
+        </div>
+        <div class="mb-3">
+          <label for="cvv" class="form-label">CVV</label>
+          <input type="text" class="form-control" id="cvv" name="cvv" required />
+        </div>
+        <div class="mb-3">
+          <label for="name_on_card" class="form-label">Nombre en la Tarjeta</label>
+          <input type="text" class="form-control" id="name_on_card" name="name_on_card" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Pagar</button>
+      </form>
+    </div>
+    <div class="col-md-6 bg-light p-4">
+      <h2>Resumen del Pedido</h2>
+      <ul class="list-group">
+        {% for item in cart_items %}
+        <li class="list-group-item">
+          {{ item.quantity }} x {{ item.producto.nombre }} - ${{ item.producto.precio }}
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="mt-3">
+        <p><strong>Total (IVA incluido):</strong> ${{ subtotal }}</p>
+        <p><small>(19% IVA: ${{ iva }})</small></p>
+        <p><strong>Total a pagar:</strong> ${{ total_con_descuento }}</p>
+        {% with descuento_valido=descuento|add:0 %}
+        {% if descuento_valido > 0 %}
+        <p>(30% de descuento aplicado: -${{ descuento_valido }})</p>
+        {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
