@@ -1,0 +1,60 @@
+{% extends 'ferremas/base.html' %}
+{% load static %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div id="carouselExampleCaptions" class="carousel slide">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active"
+            aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"
+            aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"
+            aria-label="Slide 3"></button>
+    </div>
+    
+    <div id="carouselExampleFade" class="carousel slide carousel-fade">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <a href="{% url 'product_list' %}"><img src="{% static 'img/carrusel1si.png' %}" class="d-block w-100"
+                        alt="..."></a>
+            </div>
+            <div class="carousel-item">
+                <a href="{% url 'product_list' %}"><img src="{% static 'img/banner2si.png' %}" class="d-block w-100"
+                        alt="..."></a>
+            </div>
+            <div class="carousel-item">
+                <a href="{% url 'product_list' %}"><img src="{% static 'img/banner3si.png' %}" class="d-block w-100"
+                        alt="..."></a>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+    <div class="container mt-5">
+        <h2 class="mb-4">Productos Populares</h2>
+        <div class="row">
+            {% for product in productos_populares %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <img src="{{ product.foto.url }}" class="card-img-top" alt="{{ product.nombre }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.nombre }}</h5>
+                        <p class="card-text">{{ product.descripcion|truncatewords:20 }}</p>
+                        <p class="card-text"><strong>Precio:</strong> ${{ product.precio }}</p>
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">Ver más</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

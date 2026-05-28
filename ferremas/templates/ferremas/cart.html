@@ -1,0 +1,82 @@
+{% extends 'ferremas/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Carrito de Compras{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Carrito de Compras</h2>
+    {% if cart_items %}
+    <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Foto</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart_items %}
+            <tr>
+                <td><img src="{{ item.producto.foto.url }}" alt="{{ item.producto.nombre }}" width="50" class="img-thumbnail"></td>
+                <td>{{ item.producto.nombre }}</td>
+                <td>
+                    <div class="input-group">
+                        <button class="btn btn-secondary btn-sm" onclick="updateCart('{{ item.id }}', 'decrement')">-</button>
+                        <span class="mx-2">{{ item.quantity }}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="updateCart('{{ item.id }}', 'increment')">+</button>
+                    </div>
+                </td>
+                <td>${{ item.producto.precio }}</td>
+                <td>${{ item.quantity|multiply:item.producto.precio }}</td>
+                <td>
+                    <form method="post" action="{% url 'remove_from_cart' item.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" class="text-right"><strong>Total (IVA incluido):</strong></td>
+                <td colspan="2">${{ subtotal }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><small>(19% IVA: ${{ iva }})</small></td>
+                <td colspan="2"></td>
+            </tr>
+            {% with descuento_valido=descuento|add:0 %}
+            {% if descuento_valido > 0 %}
+            <tr>
+                <td colspan="4" class="text-right"><strong>Total con descuento:</strong></td>
+                <td colspan="2">${{ total_con_descuento }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right">(30% de descuento aplicado: -${{ descuento_valido }})</td>
+                <td colspan="2"></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-right"><strong>Total a pagar:</strong></td>
+                <td colspan="2">${{ total_con_descuento }}</td>
+            </tr>
+            {% endif %}
+            {% endwith %}
+            <tr>
+                <td colspan="6" class="text-right">
+                    <a href="{% url 'clear_cart' %}" class="btn btn-danger mr-2">Vaciar Carrito</a>
+                    <a href="{% url 'checkout' %}" class="btn btn-primary">Comprar</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+        No hay productos en tu carrito.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
