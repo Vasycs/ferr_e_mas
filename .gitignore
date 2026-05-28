@@ -4,6 +4,6 @@ __pycache__/
 *$py.class
 
 # Otros archivos 
-db.sqlite3
+
 .env
 media/
