@@ -343,7 +343,7 @@ def webpay_commit(request):
         if respuesta['status'] == 'AUTHORIZED':
             # ¡Pago exitoso!
             # Lógica de datos: Marcar orden como "Pagada", descontar stock, vaciar carrito.
-            return render(request, 'ferremas/exito.html', {"detalle": respuesta})
+            return render(request, 'ferremas/success_compra.html', {"detalle": respuesta})
         else:
             # Transacción rechazada (ej. sin fondos, tarjeta bloqueada)
             return render(request, 'ferremas/rechazado.html', {"detalle": respuesta})
