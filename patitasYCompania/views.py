@@ -9,6 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
+from transbank.common.options import WebpayOptions
+from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+from transbank.common.integration_api_keys import IntegrationApiKeys
+from transbank.common.integration_type import IntegrationType
 import uuid
 
 from Prueba.settings import EMAIL_HOST_USER
@@ -18,6 +22,12 @@ import json
 from django.core.mail import EmailMessage 
 from django.core.mail import send_mail
 
+# Configuramos las credenciales públicas de prueba (Integration)
+opciones_webpay = WebpayOptions(
+    IntegrationCommerceCodes.WEBPAY_PLUS,
+    IntegrationApiKeys.WEBPAY,
+    IntegrationType.TEST
+)
 
 # Vistas de la Página Principal
 def index(request):
@@ -252,20 +262,21 @@ def checkout(request):
     total_con_descuento = str(int(total_con_descuento))
     descuento = str(int(descuento))
 
-    if request.method == 'POST':
-        
-        orden_compra = str(uuid.uuid4())[:26] # Generar ID único para la orden
+    # 1. Preparar los datos (Aquí conectas con tu Carrito de compras)
+    monto_total = total_con_descuento # Reemplazar con la suma del carrito
+    orden_compra = str(uuid.uuid4())[:26] # Generar ID único para la orden
     id_sesion = request.session.session_key or "sesion_anonima"
     
     # URL absoluta a la que Transbank enviará al usuario de vuelta
     url_retorno = request.build_absolute_uri(reverse('webpay_commit'))
 
     try:
+        tx = Transaction(opciones_webpay)
         # 2. Crear la transacción en el entorno de Integración
-        respuesta = Transaction().create(
+        respuesta = tx.create(
             buy_order=orden_compra,
             session_id=id_sesion,
-            amount=monto_total,
+            amount=total_con_descuento,
             return_url=url_retorno
         )
         
@@ -276,21 +287,41 @@ def checkout(request):
         }
         # IMPORTANTE: Aquí deberías crear la orden en MySQL con estado "Pendiente"
         
-        return render(request, 'ferreteria/pago_redirect.html', contexto)
+        return render(request, 'patitasYCompania/pago_redirect.html', contexto)
+
     except TransbankError as e:
         # Manejo de excepciones si la API de Transbank no responde
-        return render(request, 'ferreteria/error.html', {"error": str(e)})
+        return render(request, 'patitasYCompania/error.html', {"error": str(e)})
 
-    
 
-    return render(request, 'patitasYCompania/checkout.html', {
-        'cart_items': cart_items,
-        'subtotal': subtotal,
-        'total_iva': total_iva,
-        'iva': iva,
-        'descuento': descuento,
-        'total_con_descuento': total_con_descuento,
-    })
+def webpay_commit(request):
+    # 1. Capturar el token. Webpay lo envía por GET en éxito, o POST si el usuario aborta.
+    token = request.GET.get('token_ws') or request.POST.get('token_ws')
+
+    if not token:
+        # Si no hay token, el usuario cerró la ventana de pago o anuló
+        # Aquí buscarías la orden Pendiente en la base de datos y la marcarías como "Cancelada"
+        return render(request, 'patitasYCompania/pago_cancelado.html')
+
+    try:
+        tx = Transaction(opciones_webpay)
+        # 2. Confirmar el pago criptográficamente
+        respuesta = tx.commit(token)
+
+        # 3. Validar el estado
+        if respuesta['status'] == 'AUTHORIZED':
+            # ¡Pago exitoso!
+            # Lógica de datos: Marcar orden como "Pagada", descontar stock, vaciar carrito.
+            return render(request, 'patitasYCompania/exito.html', {"detalle": respuesta})
+        else:
+            # Transacción rechazada (ej. sin fondos, tarjeta bloqueada)
+            return render(request, 'patitasYCompania/rechazado.html', {"detalle": respuesta})
+
+    except TransbankError as e:
+        # Esto ocurre si el token ya fue usado (doble confirmación) o es inválido
+        return render(request, 'patitasYCompania/error.html', {"error": str(e)})
+
+   
 
 
 

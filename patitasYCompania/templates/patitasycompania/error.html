@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error en el Sistema - Ferretería</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #333; }
+        .container { background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 500px; width: 90%; border-top: 5px solid #6c757d; }
+        .icon { font-size: 64px; color: #6c757d; margin-bottom: 20px; }
+        h1 { font-size: 24px; color: #2c3e50; margin-bottom: 15px; }
+        p { color: #6c757d; font-size: 16px; line-height: 1.6; margin-bottom: 25px; }
+        .error-box { background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; text-align: left; margin-bottom: 25px; overflow-x: auto; border: 1px solid #f5c6cb; }
+        .btn { display: inline-block; background-color: #2c3e50; color: white; padding: 12px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.2s ease; }
+        .btn:hover { background-color: #1a252f; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⚠</div>
+        <h1>Error de Conexión</h1>
+        <p>Ocurrió un problema de comunicación con la plataforma de pagos o los datos de la sesión expiraron. Por favor, vuelve a intentarlo.</p>
+        
+        {% if error %}
+        <div class="error-box">
+            <strong>Detalle Técnico:</strong><br>
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <a href="{% url 'cart' %}" class="btn">Volver al Carrito</a>
+    </div>
+</body>
+</html>

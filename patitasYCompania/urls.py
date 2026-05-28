@@ -24,6 +24,8 @@ urlpatterns = [
     path('remove_from_cart/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('clear_cart/', views.clear_cart, name='clear_cart'),
     path('checkout/', views.checkout, name='checkout'),
+    path('checkout/webpay/crear/', views.checkout, name='webpay_create'),
+    path('checkout/webpay/retorno/', views.webpay_commit, name='webpay_commit'),
 ] 
 
 if settings.DEBUG:
