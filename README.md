@@ -1,6 +1,6 @@
 Ferremas
 
-Este es un proyecto de e-commerce para la venta de accesorios para mascotas.
+Este es un proyecto de e-commerce para ferreteria Ferremas
 
 Requisitos
 
