@@ -1,11 +1,19 @@
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.error.transbank_error import TransbankError
+from transbank.common.options import WebpayOptions
+from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
+from transbank.common.integration_api_keys import IntegrationApiKeys
+from transbank.common.integration_type import IntegrationType
+import uuid
 
 from Prueba.settings import EMAIL_HOST_USER
 from .models import Producto, Profile, CartItem
@@ -14,6 +22,12 @@ import json
 from django.core.mail import EmailMessage 
 from django.core.mail import send_mail
 
+# Configuramos las credenciales públicas de prueba (Integration)
+opciones_webpay = WebpayOptions(
+    IntegrationCommerceCodes.WEBPAY_PLUS,
+    IntegrationApiKeys.WEBPAY,
+    IntegrationType.TEST
+)
 
 # Vistas de la Página Principal
 def index(request):
@@ -84,12 +98,12 @@ def user_login(request):
         form = LoginForm()
     return render(request, 'patitasYCompania/login.html', {'form': form})
 
-@login_required
+#@login_required
 def user_logout(request):
     auth_logout(request)
     return redirect('index')
 
-@login_required
+#@login_required
 def user_profile(request):
     user = request.user
     if request.method == 'POST':
@@ -102,7 +116,7 @@ def user_profile(request):
         return redirect('user_profile')
     return render(request, 'patitasYCompania/perfil.html', {'usuario': user})
 
-@login_required
+#@login_required
 def delete_user(request):
     if request.method == 'POST':
         user = request.user
@@ -119,7 +133,7 @@ def product_detail(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     return render(request, 'patitasYCompania/producto.html', {'product': product})
 
-@login_required
+#@login_required
 def product_create(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
@@ -130,7 +144,7 @@ def product_create(request):
         form = ProductoForm()
     return render(request, 'patitasYCompania/product_form.html', {'form': form})
 
-@login_required
+#@login_required
 def product_update(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     if request.method == 'POST':
@@ -142,7 +156,7 @@ def product_update(request, product_id):
         form = ProductoForm(instance=product)
     return render(request, 'patitasYCompania/product_form.html', {'form': form})
 
-@login_required
+#@login_required
 def product_delete(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     if request.method == 'POST':
@@ -163,7 +177,7 @@ def contact(request):
     return render(request, 'patitasYCompania/contacto.html', {'form': form})
 
 # Vistas de Carrito de Compras
-@login_required
+#@login_required
 def add_to_cart(request, product_id):
     producto = get_object_or_404(Producto, id=product_id)
     cart_item, created = CartItem.objects.get_or_create(user=request.user, producto=producto)
@@ -175,7 +189,7 @@ def add_to_cart(request, product_id):
 
 
 
-@login_required
+#@login_required
 def cart(request):
     cart_items = CartItem.objects.filter(user=request.user)
     subtotal = sum(Decimal(item.producto.precio) * item.quantity for item in cart_items)
@@ -205,7 +219,7 @@ def cart(request):
     })
 
 
-@login_required
+#@login_required
 def update_cart(request, item_id, action):
     cart_item = get_object_or_404(CartItem, id=item_id, user=request.user)
     if action == 'increment':
@@ -215,20 +229,20 @@ def update_cart(request, item_id, action):
     cart_item.save()
     return JsonResponse({'message': 'Carrito actualizado correctamente'})
 
-@login_required
+#@login_required
 def remove_from_cart(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, user=request.user)
     cart_item.delete()
     messages.success(request, 'El producto ha sido eliminado del carrito.')
     return redirect('cart')
 
-@login_required
+#@login_required
 def clear_cart(request):
     CartItem.objects.filter(user=request.user).delete()
     messages.success(request, 'El carrito ha sido vaciado.')
     return redirect('cart')
 
-@login_required
+#@login_required
 def checkout(request):
     cart_items = CartItem.objects.filter(user=request.user)
     subtotal = sum(Decimal(item.producto.precio) * item.quantity for item in cart_items)
@@ -248,43 +262,66 @@ def checkout(request):
     total_con_descuento = str(int(total_con_descuento))
     descuento = str(int(descuento))
 
-    if request.method == 'POST':
-        # Procesamiento del pago (omitido)
-        request.user.profile.has_purchased = True
-        request.user.profile.save()
+    # 1. Preparar los datos (Aquí conectas con tu Carrito de compras)
+    monto_total = total_con_descuento # Reemplazar con la suma del carrito
+    orden_compra = str(uuid.uuid4())[:26] # Generar ID único para la orden
+    id_sesion = request.session.session_key or "sesion_anonima"
+    
+    # URL absoluta a la que Transbank enviará al usuario de vuelta
+    url_retorno = request.build_absolute_uri(reverse('webpay_commit'))
 
-        email_body = f"""
-        <h2>Gracias por tu compra en Patitas y Compañía, {request.user.username}!</h2>
-        <p>Aquí tienes el detalle de tus productos:</p>
-        <ul>
-            {''.join([f"<li>{item.quantity} x {item.producto.nombre} - ${item.producto.precio}</li>" for item in cart_items])}
-        </ul>
-        <p><strong>Total a pagar: ${total_con_descuento}</strong></p>
-        <p>© 2024 Patitas y Compañía</p>
-        """
-
-        send_mail(
-            'Gracias por tu compra en Patitas y Compañía',
-            '',
-            EMAIL_HOST_USER,
-            [request.user.email],
-            html_message=email_body,
-            fail_silently=False,
+    try:
+        tx = Transaction(opciones_webpay)
+        # 2. Crear la transacción en el entorno de Integración
+        respuesta = tx.create(
+            buy_order=orden_compra,
+            session_id=id_sesion,
+            amount=total_con_descuento,
+            return_url=url_retorno
         )
+        
+        # 3. Pasar los datos al template que hará la redirección
+        contexto = {
+            "url_transbank": respuesta['url'],
+            "token": respuesta['token']
+        }
+        # IMPORTANTE: Aquí deberías crear la orden en MySQL con estado "Pendiente"
+        
+        return render(request, 'patitasYCompania/pago_redirect.html', contexto)
 
-        # Vaciar el carrito después del pago
-        cart_items.delete()
+    except TransbankError as e:
+        # Manejo de excepciones si la API de Transbank no responde
+        return render(request, 'patitasYCompania/error.html', {"error": str(e)})
 
-        return redirect('success_compra')
 
-    return render(request, 'patitasYCompania/checkout.html', {
-        'cart_items': cart_items,
-        'subtotal': subtotal,
-        'total_iva': total_iva,
-        'iva': iva,
-        'descuento': descuento,
-        'total_con_descuento': total_con_descuento,
-    })
+def webpay_commit(request):
+    # 1. Capturar el token. Webpay lo envía por GET en éxito, o POST si el usuario aborta.
+    token = request.GET.get('token_ws') or request.POST.get('token_ws')
+
+    if not token:
+        # Si no hay token, el usuario cerró la ventana de pago o anuló
+        # Aquí buscarías la orden Pendiente en la base de datos y la marcarías como "Cancelada"
+        return render(request, 'patitasYCompania/pago_cancelado.html')
+
+    try:
+        tx = Transaction(opciones_webpay)
+        # 2. Confirmar el pago criptográficamente
+        respuesta = tx.commit(token)
+
+        # 3. Validar el estado
+        if respuesta['status'] == 'AUTHORIZED':
+            # ¡Pago exitoso!
+            # Lógica de datos: Marcar orden como "Pagada", descontar stock, vaciar carrito.
+            return render(request, 'patitasYCompania/exito.html', {"detalle": respuesta})
+        else:
+            # Transacción rechazada (ej. sin fondos, tarjeta bloqueada)
+            return render(request, 'patitasYCompania/rechazado.html', {"detalle": respuesta})
+
+    except TransbankError as e:
+        # Esto ocurre si el token ya fue usado (doble confirmación) o es inválido
+        return render(request, 'patitasYCompania/error.html', {"error": str(e)})
+
+   
 
 
 

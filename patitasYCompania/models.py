@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import uuid
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -47,3 +48,36 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+class Orden(models.Model):
+    # Estados posibles de la orden
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente de Pago'),
+        ('PAGADA', 'Pagada Exitosamente'),
+        ('RECHAZADA', 'Pago Rechazado'),
+        ('CANCELADA', 'Cancelada por el Usuario / Timeout'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    session_id = models.CharField(max_length=100, blank=True, null=True) # Para usuarios anónimos
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    
+    # Datos específicos para auditoría con Transbank
+    total = models.PositiveIntegerField(help_text="Total pagado en CLP")
+    token_ws = models.CharField(max_length=255, blank=True, null=True, help_text="Token de Webpay")
+    codigo_autorizacion = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"Orden {self.id} - {self.estado}"
+    
+class DetalleOrden(models.Model):
+    orden = models.ForeignKey(Orden, related_name='detalles', on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.PositiveIntegerField(help_text="Precio al momento de la compra")
+
+    def subtotal(self):
+        return self.cantidad * self.precio_unitario

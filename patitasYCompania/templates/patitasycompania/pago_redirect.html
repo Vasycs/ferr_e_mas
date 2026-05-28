@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirigiendo al pago...</title>
+</head>
+<body>
+    <p>Serás redirigido a Webpay en un momento...</p>
+    
+    <!-- El formulario apunta a la URL que devolvió la función create -->
+    <form id="form-webpay" action="{{ url_transbank }}" method="POST">
+        <input type="hidden" name="token_ws" value="{{ token }}">
+    </form>
+
+    <!-- Auto-submit del formulario -->
+    <script>
+        document.getElementById('form-webpay').submit();
+    </script>
+</body>
+</html>
