@@ -98,12 +98,12 @@ def user_login(request):
         form = LoginForm()
     return render(request, 'patitasYCompania/login.html', {'form': form})
 
-#@login_required
+@login_required
 def user_logout(request):
     auth_logout(request)
     return redirect('index')
 
-#@login_required
+@login_required
 def user_profile(request):
     user = request.user
     if request.method == 'POST':
@@ -116,7 +116,7 @@ def user_profile(request):
         return redirect('user_profile')
     return render(request, 'patitasYCompania/perfil.html', {'usuario': user})
 
-#@login_required
+@login_required
 def delete_user(request):
     if request.method == 'POST':
         user = request.user
@@ -133,7 +133,7 @@ def product_detail(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     return render(request, 'patitasYCompania/producto.html', {'product': product})
 
-#@login_required
+@login_required
 def product_create(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
@@ -144,7 +144,7 @@ def product_create(request):
         form = ProductoForm()
     return render(request, 'patitasYCompania/product_form.html', {'form': form})
 
-#@login_required
+@login_required
 def product_update(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     if request.method == 'POST':
@@ -156,7 +156,7 @@ def product_update(request, product_id):
         form = ProductoForm(instance=product)
     return render(request, 'patitasYCompania/product_form.html', {'form': form})
 
-#@login_required
+@login_required
 def product_delete(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
     if request.method == 'POST':
@@ -177,7 +177,7 @@ def contact(request):
     return render(request, 'patitasYCompania/contacto.html', {'form': form})
 
 # Vistas de Carrito de Compras
-#@login_required
+@login_required
 def add_to_cart(request, product_id):
     producto = get_object_or_404(Producto, id=product_id)
     cart_item, created = CartItem.objects.get_or_create(user=request.user, producto=producto)
@@ -189,7 +189,7 @@ def add_to_cart(request, product_id):
 
 
 
-#@login_required
+@login_required
 def cart(request):
     cart_items = CartItem.objects.filter(user=request.user)
     subtotal = sum(Decimal(item.producto.precio) * item.quantity for item in cart_items)
@@ -219,7 +219,7 @@ def cart(request):
     })
 
 
-#@login_required
+@login_required
 def update_cart(request, item_id, action):
     cart_item = get_object_or_404(CartItem, id=item_id, user=request.user)
     if action == 'increment':
@@ -229,20 +229,20 @@ def update_cart(request, item_id, action):
     cart_item.save()
     return JsonResponse({'message': 'Carrito actualizado correctamente'})
 
-#@login_required
+@login_required
 def remove_from_cart(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, user=request.user)
     cart_item.delete()
     messages.success(request, 'El producto ha sido eliminado del carrito.')
     return redirect('cart')
 
-#@login_required
+@login_required
 def clear_cart(request):
     CartItem.objects.filter(user=request.user).delete()
     messages.success(request, 'El carrito ha sido vaciado.')
     return redirect('cart')
 
-#@login_required
+@login_required
 def checkout(request):
     cart_items = CartItem.objects.filter(user=request.user)
     subtotal = sum(Decimal(item.producto.precio) * item.quantity for item in cart_items)
