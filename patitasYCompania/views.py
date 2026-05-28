@@ -285,7 +285,7 @@ def checkout(request):
             "url_transbank": respuesta['url'],
             "token": respuesta['token']
         }
-        # IMPORTANTE: Aquí deberías crear la orden en MySQL con estado "Pendiente"
+    
         
         return render(request, 'patitasYCompania/pago_redirect.html', contexto)
 
@@ -300,7 +300,6 @@ def webpay_commit(request):
 
     if not token:
         # Si no hay token, el usuario cerró la ventana de pago o anuló
-        # Aquí buscarías la orden Pendiente en la base de datos y la marcarías como "Cancelada"
         return render(request, 'patitasYCompania/pago_cancelado.html')
 
     try:
@@ -314,7 +313,7 @@ def webpay_commit(request):
             # Lógica de datos: Marcar orden como "Pagada", descontar stock, vaciar carrito.
             return render(request, 'patitasYCompania/exito.html', {"detalle": respuesta})
         else:
-            # Transacción rechazada (ej. sin fondos, tarjeta bloqueada)
+            # Transacción rechazada 
             return render(request, 'patitasYCompania/rechazado.html', {"detalle": respuesta})
 
     except TransbankError as e:
