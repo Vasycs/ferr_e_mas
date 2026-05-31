@@ -1,3 +1,4 @@
 Django==5.0.6
 pillow
 python-dotenv
+transbank-sdk
