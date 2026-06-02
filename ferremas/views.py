@@ -16,7 +16,9 @@ from transbank.common.integration_type import IntegrationType
 import uuid
 
 from Prueba.settings import EMAIL_HOST_USER
-from .models import Producto, Profile, CartItem
+from django.db import transaction
+from django.db.models import F
+from .models import Producto, Profile, CartItem, Orden, DetalleOrden
 from .forms import ContactForm, LoginForm, ProductoForm, RegistroUsuarioForm
 import json
 from django.core.mail import EmailMessage 
@@ -293,21 +295,42 @@ def checkout(request):
     total_con_descuento = str(int(total_con_descuento))
     descuento = str(int(descuento))
 
-    # 1. Preparar los datos (Aquí conectas con tu Carrito de compras)
+    if request.user.is_authenticated:
+        items_carrito = CartItem.objects.filter(user=request.user)
+    else:
+        # Si permites comprar sin cuenta, usas la session_key
+        items_carrito = CartItem.objects.filter(session_id=request.session.session_key)
+
+    # Si por alguna razón el carrito está vacío, devolverlo a cart.html
+    if not items_carrito.exists():
+        return redirect('cart') # Asegúrate de que el name de tu url sea 'cart'
     
-    orden_compra = str(uuid.uuid4())[:26] # Generar ID único para la orden
-    id_sesion = request.session.session_key or "sesion_anonima"
+    orden = Orden.objects.create(
+    usuario = request.user if request.user.is_authenticated else None,
+    session_id = request.session.session_key,
+    total = total_con_descuento,
+    estado = 'PENDIENTE',
+    )
+
     
-    # URL absoluta a la que Transbank enviará al usuario de vuelta
+
+    for item in items_carrito:
+        DetalleOrden.objects.create(
+            orden=orden,
+            producto=item.producto,
+            cantidad=item.quantity,
+            precio_unitario=item.producto.precio
+        )
+
     url_retorno = request.build_absolute_uri(reverse('webpay_commit'))
 
     try:
         tx = Transaction(opciones_webpay)
         # 2. Crear la transacción en el entorno de Integración
         respuesta = tx.create(
-            buy_order=orden_compra,
-            session_id=id_sesion,
-            amount=total_con_descuento,
+            buy_order=orden.numero_pedido,
+            session_id=orden.session_id,
+            amount=orden.total,
             return_url=url_retorno
         )
         
@@ -341,16 +364,56 @@ def webpay_commit(request):
 
         # 3. Validar el estado
         if respuesta['status'] == 'AUTHORIZED':
-            # ¡Pago exitoso!
-            # Lógica de datos: Marcar orden como "Pagada", descontar stock, vaciar carrito.
-            return render(request, 'ferremas/success_compra.html', {"detalle": respuesta})
+            orden_id = respuesta['buy_order']
+            
+            try:
+                # 2. Usar transaction.atomic para un proceso seguro
+                with transaction.atomic():
+                    # Bloqueamos temporalmente la fila de la orden para que nadie más la toque
+                    numero_pedido_tb = respuesta['buy_order']
+                    orden = Orden.objects.select_for_update().get(numero_pedido=numero_pedido_tb)
+                    
+                    # Evitamos descontar el stock dos veces si por error el usuario recarga la página
+                    if orden.estado == 'PAGADA':
+                        return render(request, 'ferremas/exito.html', {"detalle": respuesta})
+
+                    # 3. Actualizamos el estado de la orden
+                    orden.estado = 'PAGADA'
+                    orden.codigo_autorizacion = respuesta['authorization_code']
+                    orden.save()
+
+                    # 4. Descontamos el stock de cada producto en el carrito
+                    for detalle in orden.detalles.all():
+                        producto = detalle.producto
+                        producto.stock = F('stock') - detalle.cantidad
+                        producto.save()
+
+                    # 3. ¡NUEVO! Vaciar el carrito de la base de datos
+                    if request.user.is_authenticated:
+                        CartItem.objects.filter(user=request.user).delete()
+                    else:
+                        CartItem.objects.filter(session_id=request.session.session_key).delete()
+                        
+            except Orden.DoesNotExist:
+                return render(request, 'ferremas/error.html', {"error": "Orden no encontrada en la base de datos."})
+
+            # Pago exitoso y stock descontado
+            return render(request, 'ferremas/success.html', {"detalle": respuesta})
         else:
-            # Transacción rechazada (ej. sin fondos, tarjeta bloqueada)
+            # Si fue rechazado (ej. sin fondos), también es buena idea actualizar la orden
+            try:
+                orden = Orden.objects.get(id=respuesta['buy_order'])
+                orden.estado = 'RECHAZADA'
+                orden.save()
+            except Orden.DoesNotExist:
+                pass
+                
             return render(request, 'ferremas/rechazado.html', {"detalle": respuesta})
 
     except TransbankError as e:
         # Esto ocurre si el token ya fue usado (doble confirmación) o es inválido
         return render(request, 'ferremas/error.html', {"error": str(e)})
+
 
     
 

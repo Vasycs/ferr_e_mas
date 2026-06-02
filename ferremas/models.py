@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import random
+import string
 import uuid
 
 class Producto(models.Model):
@@ -9,6 +11,7 @@ class Producto(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=0)
     descripcion = models.TextField()
     foto = models.ImageField(upload_to='productos/')
+    stock = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.nombre
@@ -49,6 +52,13 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
 
+
+def generar_numero_pedido():
+    # Genera un código de 8 caracteres alfanuméricos. Ej: FER-A1B2C3D4
+    codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    return f"FER-{codigo}"
+
+
 class Orden(models.Model):
     # Estados posibles de la orden
     ESTADO_CHOICES = [
@@ -64,6 +74,7 @@ class Orden(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    numero_pedido = models.CharField(max_length=20, unique=True, default=generar_numero_pedido)
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     session_id = models.CharField(max_length=100, blank=True, null=True) # Para usuarios anónimos
     
