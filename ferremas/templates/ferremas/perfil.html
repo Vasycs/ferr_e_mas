@@ -23,6 +23,9 @@
                             <label for="direccion" class="form-label">Dirección</label>
                             <input type="text" class="form-control" id="direccion" name="direccion" value="{{ usuario.profile.direccion|default_if_none:'' }}" placeholder="Dirección">
                         </div>
+                        <hr>
+
+                        {% include 'ferremas/mis_compras.html' %}
                         <div class="d-flex justify-content-center">
                             <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
                             <form method="post" action="{% url 'delete_user' %}">

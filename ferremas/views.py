@@ -100,16 +100,28 @@ def user_logout(request):
 @login_required
 def user_profile(request):
     user = request.user
+    
     if request.method == 'POST':
+        # Procesar actualización de datos
         user.first_name = request.POST.get('nombre')
         user.profile.telefono = request.POST.get('telefono')
         user.profile.direccion = request.POST.get('direccion')
         user.save()
         user.profile.save()
+        
         messages.success(request, 'Perfil actualizado correctamente.')
-        return redirect('user_profile')
-    return render(request, 'ferremas/perfil.html', {'usuario': user})
-
+        return redirect('user_profile') # El redirect recarga la página limpiamente
+    
+    # 1. La consulta debe ir AFUERA del POST para que se ejecute al cargar la página normalmente
+    ordenes_usuario = Orden.objects.filter(usuario=request.user).exclude(estado='PENDIENTE').order_by('-fecha_creacion')
+    
+    # 2. Empaquetamos los datos en el contexto
+    contexto = {
+        'usuario': user,
+        'ordenes': ordenes_usuario # ¡Esto es lo que conectará con tu include!
+    }
+    
+    return render(request, 'ferremas/perfil.html', contexto)
 @login_required
 def delete_user(request):
     if request.method == 'POST':
@@ -407,7 +419,12 @@ def webpay_commit(request):
         return render(request, 'ferremas/error.html', {"error": str(e)})
 
 
+@login_required
+def mis_compras(request):
+    # Buscamos todas las órdenes del usuario actual (excluyendo las abandonadas)
+    ordenes = Orden.objects.filter(usuario=request.user).exclude(estado='PENDIENTE').order_by('-fecha_creacion')
     
+    return render(request, 'ferremas/mis_compras.html', {'ordenes': ordenes})
 
 
 # Vistas de Prueba de Envío de Correo

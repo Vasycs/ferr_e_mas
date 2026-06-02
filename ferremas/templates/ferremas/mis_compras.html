@@ -1,0 +1,45 @@
+<div class="historial-compras" style="margin-top: 30px;">
+    <h3>Mi Historial de Compras</h3>
+    
+    {% if ordenes %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background-color: #f1f3f5; text-align: left;">
+                    <th style="padding: 10px; border-bottom: 2px solid #ddd;">N° Pedido</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #ddd;">Fecha</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #ddd;">Productos</th> <th style="padding: 10px; border-bottom: 2px solid #ddd;">Total</th>
+                    <th style="padding: 10px; border-bottom: 2px solid #ddd;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orden in ordenes %}
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>{{ orden.numero_pedido }}</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ orden.fecha_creacion|date:"d/m/Y" }}</td>
+                    
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-size: 14px;">
+                        <ul style="margin: 0; padding-left: 20px;">
+                            {% for detalle in orden.detalles.all %}
+                                <li>{{ detalle.cantidad }}x {{ detalle.producto.nombre }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">${{ orden.total }}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+                        {% if orden.estado == 'PAGADA' %}
+                            <span style="color: green; font-weight: bold;">Pagada</span>
+                        {% else %}
+                            <span style="color: #666;">{{ orden.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 5px;">
+            <p>Aún no has realizado compras en Ferremas.</p>
+        </div>
+    {% endif %}
+</div>
