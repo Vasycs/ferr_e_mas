@@ -326,7 +326,7 @@ def checkout(request):
 
     try:
         tx = Transaction(opciones_webpay)
-        # 2. Crear la transacción en el entorno de Integración
+        #  Crear la transacción en el entorno de Integración
         respuesta = tx.create(
             buy_order=orden.numero_pedido,
             session_id=orden.session_id,
@@ -334,7 +334,7 @@ def checkout(request):
             return_url=url_retorno
         )
         
-        # 3. Pasar los datos al template que hará la redirección
+        #  Pasar los datos al template que hará la redirección
         contexto = {
             "url_transbank": respuesta['url'],
             "token": respuesta['token']
@@ -349,7 +349,7 @@ def checkout(request):
 
 
 def webpay_commit(request):
-    # 1. Capturar el token. Webpay lo envía por GET en éxito, o POST si el usuario aborta.
+    #  Capturar el token. Webpay lo envía por GET en éxito, o POST si el usuario aborta.
     token = request.GET.get('token_ws') or request.POST.get('token_ws')
 
     if not token:
@@ -359,10 +359,10 @@ def webpay_commit(request):
 
     try:
         tx = Transaction(opciones_webpay)
-        # 2. Confirmar el pago criptográficamente
+        #  Confirmar el pago criptográficamente
         respuesta = tx.commit(token)
 
-        # 3. Validar el estado
+        #  Validar el estado
         if respuesta['status'] == 'AUTHORIZED':
             orden_id = respuesta['buy_order']
             
@@ -377,18 +377,18 @@ def webpay_commit(request):
                     if orden.estado == 'PAGADA':
                         return render(request, 'ferremas/exito.html', {"detalle": respuesta})
 
-                    # 3. Actualizamos el estado de la orden
+                    #  Actualizamos el estado de la orden
                     orden.estado = 'PAGADA'
                     orden.codigo_autorizacion = respuesta['authorization_code']
                     orden.save()
 
-                    # 4. Descontamos el stock de cada producto en el carrito
+                    #  Descontamos el stock de cada producto en el carrito
                     for detalle in orden.detalles.all():
                         producto = detalle.producto
                         producto.stock = F('stock') - detalle.cantidad
                         producto.save()
 
-                    # 3. ¡NUEVO! Vaciar el carrito de la base de datos
+                    #   Vaciar el carrito de la base de datos
                     if request.user.is_authenticated:
                         CartItem.objects.filter(user=request.user).delete()
                     else:
