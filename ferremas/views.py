@@ -59,7 +59,7 @@ def registro(request):
             <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
                 <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
                     <h2 style="color: #333;">¡Bienvenido a Ferremas, {user.username}!</h2>
-                    <p style="color: #555;">Gracias por registrarte en nuestra tienda. Nos alegra que formes parte de nuestra comunidad de amantes de las mascotas.</p>
+                    <p style="color: #555;">Gracias por registrarte en nuestra tienda..</p>
                     <p style="color: #555;">Como agradecimiento, te ofrecemos un <strong>30% de descuento</strong> en tu primera compra. ¡No te lo pierdas!</p>
                     <p style="color: #555;">Si tienes alguna pregunta, no dudes en contactarnos. ¡Estamos aquí para ayudarte!</p>
                     <p style="color: #777; font-size: 0.9em;">&copy; 2024 Ferremas</p>
