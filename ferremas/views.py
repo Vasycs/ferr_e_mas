@@ -68,18 +68,10 @@ def registro(request):
             </html>
             """
 
-            email = EmailMessage(
-                'Registro Exitoso en Ferremas',
-                body,
-                EMAIL_HOST_USER,
-                [user.email]
-            )
-            email.content_subtype = 'html'
-            email.send(fail_silently=False)
             
             auth_login(request, user)
             messages.success(request, "Registro exitoso. Bienvenido a Ferremas.")
-            return redirect('user_profile')
+            return redirect('index')
     else:
         form = RegistroUsuarioForm()
     return render(request, 'ferremas/registro.html', {'form': form})
