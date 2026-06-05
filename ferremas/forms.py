@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['nombre', 'precio', 'descripcion', 'foto']
+        fields = ['nombre', 'precio','stock', 'descripcion', 'foto']
 
 class ProfileForm(forms.ModelForm):
     class Meta:

@@ -1,0 +1,47 @@
+{% extends 'ferremas/base.html' %}
+
+{% block title %}Panel de Vendedor{% endblock %}
+
+{% block content %}
+<div style="background-color: #fff2df; padding: 20px; border-radius: 8px; margin-bottom: 20px;" class="container">
+    <h1>Panel de Vendedor: {{ user.first_name }}</h1>
+    
+    <div style="background-color: #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h2>Ingresos Totales: <span style="color: green;">${{ total_ganado }}</span></h2>
+        <a href="{% url 'agregar_producto' %}" class="btn btn-primary">Publicar Nuevo Producto</a>
+    </div>
+
+    <h3>Mis Productos Publicados</h3>
+    <ul>
+        {% for producto in productos %}
+            <li>{{ producto.nombre }} - Stock: {{ producto.stock }} - Precio: ${{ producto.precio }}</li>
+        {% empty %}
+            <p>No tienes productos publicados aún.</p>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h3>Mis Ventas (Historial)</h3>
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>Fecha</th>
+            <th>N° Pedido General</th>
+            <th>Producto Vendido</th>
+            <th>Cantidad</th>
+            <th>Ingreso</th>
+        </tr>
+        {% for venta in ventas %}
+        <tr>
+            <td>{{ venta.orden.fecha_creacion|date:"d/m/Y" }}</td>
+            <td>{{ venta.orden.numero_pedido }}</td>
+            <td>{{ venta.producto.nombre }}</td>
+            <td>{{ venta.cantidad }}</td>
+            <td>${{ venta.subtotal }}</td> </tr>
+        {% empty %}
+            <p>Aún no tienes ventas registradas.</p>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

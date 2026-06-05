@@ -12,6 +12,7 @@ class Producto(models.Model):
     descripcion = models.TextField()
     foto = models.ImageField(upload_to='productos/')
     stock = models.PositiveIntegerField(default=0)
+    vendedor = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='productos_en_venta')
 
     def __str__(self):
         return self.nombre

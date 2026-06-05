@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import Group, User
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
@@ -17,7 +17,7 @@ import uuid
 
 from Prueba.settings import EMAIL_HOST_USER
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from .models import Producto, Profile, CartItem, Orden, DetalleOrden
 from .forms import ContactForm, LoginForm, ProductoForm, RegistroUsuarioForm
 import json
@@ -30,6 +30,20 @@ opciones_webpay = WebpayOptions(
     IntegrationApiKeys.WEBPAY,
     IntegrationType.TEST
 )
+
+@login_required
+def redireccion_login(request):
+    # Revisamos si el usuario pertenece al grupo 'Vendedores'
+    if request.user.groups.filter(name='Vendedores').exists():
+        return redirect('panel_vendedor')
+        
+    # Opcional: Si es el superusuario (tú), mandarlo al admin de Django
+    elif request.user.is_superuser:
+        return redirect('/admin/')
+        
+    # Si no es vendedor ni admin, es un cliente normal de Ferremas
+    else:
+        return redirect('product_list') # O redirigirlo al 'home' / tienda
 
 # Vistas de la Página Principal
 def index(request):
@@ -85,7 +99,7 @@ def user_login(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 auth_login(request, user)
-                return redirect('index')
+                return redirect('redireccion_login')
             else:
                 return render(request, 'ferremas/login.html', {'form': form, 'error': 'Credenciales incorrectas'})
     else:
@@ -129,6 +143,53 @@ def delete_user(request):
         user.delete()
         messages.success(request, "Tu cuenta ha sido eliminada exitosamente.")
         return redirect('index')
+    
+    # Función de seguridad: Verifica si el usuario pertenece al grupo "Vendedores"
+def es_vendedor(user):
+    return user.groups.filter(name='Vendedores').exists()
+
+@login_required
+@user_passes_test(es_vendedor, login_url='/') # Si no es vendedor, lo expulsa al inicio
+def panel_vendedor(request):
+    # 1. Obtener solo los productos de ESTE vendedor
+    mis_productos = Producto.objects.filter(vendedor=request.user)
+    
+    # 2. Obtener las ventas exitosas de ESTE vendedor (navegando desde DetalleOrden)
+    mis_ventas = DetalleOrden.objects.filter(
+        producto__vendedor=request.user, 
+        orden__estado='PAGADA'
+    ).order_by('-orden__fecha_creacion')
+    
+    # 3. Calcular el dinero total ganado por este vendedor
+    # Multiplica cantidad x precio_unitario de cada detalle y los suma
+    total_ganado = mis_ventas.aggregate(
+        total=Sum(F('cantidad') * F('precio_unitario'))
+    )['total'] or 0
+
+    contexto = {
+        'productos': mis_productos,
+        'ventas': mis_ventas,
+        'total_ganado': total_ganado
+    }
+    return render(request, 'ferremas/panel_vendedor.html', contexto)
+
+@login_required
+@user_passes_test(es_vendedor, login_url='/')
+def agregar_producto(request):
+    if request.method == 'POST':
+        # request.FILES es necesario para capturar la imagen
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            # commit=False pausa el guardado para permitirnos agregar datos extra
+            nuevo_producto = form.save(commit=False)
+            nuevo_producto.vendedor = request.user # Asignamos el dueño en secreto
+            nuevo_producto.save()
+            messages.success(request, '¡Producto agregado con éxito!')
+            return redirect('panel_vendedor')
+    else:
+        form = ProductoForm()
+
+    return render(request, 'ferremas/agregar_producto.html', {'form': form})
 
 # Vistas de Producto
 def product_list(request):
@@ -251,9 +312,6 @@ def clear_cart(request):
 def procesar_checkout(request):
     if request.method == 'POST':
         metodo = request.POST.get('metodo_pago')
-        
-        # Lógica general: Aquí deberías crear la Orden en la Base de Datos.
-        # orden = Orden.objects.create(...)
         
         if metodo == 'WEBPAY':
             # orden.metodo_pago = 'WEBPAY'

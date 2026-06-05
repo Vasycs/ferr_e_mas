@@ -29,6 +29,9 @@ urlpatterns = [
     path('checkout/procesar/', views.procesar_checkout, name='procesar_checkout'),
     path('checkout/transferencia/', views.instrucciones_transferencia, name='instrucciones_transferencia'),
     path('perfil/mis-compras/', views.mis_compras, name='mis_compras'),
+    path('vendedor/panel/', views.panel_vendedor, name='panel_vendedor'),
+    path('vendedor/agregar-producto/', views.agregar_producto, name='agregar_producto'),
+    path('redireccion/', views.redireccion_login, name='redireccion_login'),
 ] 
 
 if settings.DEBUG:
