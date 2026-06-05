@@ -57,6 +57,16 @@ Uso
 
 Accede a `http://127.0.0.1:8000/` en tu navegador para ver el proyecto en funcionamiento.
 
+- usuario test de venta:
+
+user: testventa
+pass: abcd1234
+
+- superuser test:
+
+user: abrah
+pass: abraham15
+
 Contacto
 
 Si tienes preguntas o sugerencias, no dudes en abrir un issue o contactar al desarrollador.
