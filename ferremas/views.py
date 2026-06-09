@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.error.transbank_error import TransbankError
 from transbank.common.options import WebpayOptions
@@ -14,6 +14,8 @@ from transbank.common.integration_commerce_codes import IntegrationCommerceCodes
 from transbank.common.integration_api_keys import IntegrationApiKeys
 from transbank.common.integration_type import IntegrationType
 import uuid
+
+from ferremas.services.divisas import obtener_valor_dolar
 
 from Prueba.settings import EMAIL_HOST_USER
 from django.db import transaction
@@ -198,6 +200,10 @@ def product_list(request):
  
 def product_detail(request, product_id):
     product = get_object_or_404(Producto, id=product_id)
+    valor_dolar = obtener_valor_dolar()
+    product.usd = round(float(product.precio) / float(valor_dolar), 2)
+    product.save()
+
     return render(request, 'ferremas/producto.html', {'product': product})
 
 @login_required

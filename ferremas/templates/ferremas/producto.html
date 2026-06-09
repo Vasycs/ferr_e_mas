@@ -12,6 +12,7 @@
             <h1>{{ product.nombre }}</h1>
             <p>{{ product.descripcion }}</p>
             <p><strong>Precio:</strong> ${{ product.precio }}</p>
+            <p><strong>Precio en USD:</strong> ${{ product.usd }}</p>
             <p><strong>Stock:</strong> {{ product.stock }} unidades disponibles</p>
             {% if user.is_authenticated %}
                 <a href="{% url 'add_to_cart' product.id %}" class="btn btn-primary">Agregar al Carrito</a>

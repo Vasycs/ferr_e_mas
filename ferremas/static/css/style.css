@@ -11,7 +11,8 @@ main {
 
 body {
     font-family: Arial, sans-serif;
-    background-image: url('../img/fondo_madera.png');
+    background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+    url('../img/fondo_madera.png');
 }
 
 .custom-card {
