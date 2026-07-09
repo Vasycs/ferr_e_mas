@@ -67,6 +67,13 @@ pass: abcd1234
 user: abrah
 pass: abraham15
 
+- tarjeta de prueba
+- 4051 8856 0044 6623
+- CVV 123
+- cualquier fecha de expiración
+- RUT 11.111.111-1
+- clave 123
+
 Contacto
 
 Si tienes preguntas o sugerencias, no dudes en abrir un issue o contactar al desarrollador.
